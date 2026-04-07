@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人工作汇报</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        .section {
+            padding: 40px;
+            border-bottom: 1px solid #eee;
+        }
+        .section:last-child { border-bottom: none; }
+        .section-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding-left: 15px;
+            border-left: 5px solid #3498db;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #3498db;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -36px;
+            top: 25px;
+            width: 15px;
+            height: 15px;
+            background: #3498db;
+            border-radius: 50%;
+            border: 3px solid #fff;
+        }
+        .timeline-date {
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        .timeline-title {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .timeline-content { color: #666; line-height: 1.8; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .stat-number { font-size: 2.5em; font-weight: bold; margin-bottom: 10px; }
+        .stat-label { font-size: 1em; opacity: 0.9; }
+        .chart-container {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin: 30px 0;
+        }
+        .chart-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .achievement-list {
+            list-style: none;
+        }
+        .achievement-list li {
+            padding: 15px 0;
+            padding-left: 30px;
+            position: relative;
+            border-bottom: 1px dashed #eee;
+        }
+        .achievement-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .highlight {
+            background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .plan-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .plan-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #27ae60;
+        }
+        .plan-card h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .plan-card ul {
+            list-style: none;
+            color: #666;
+        }
+        .plan-card li {
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .plan-card li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+        }
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .section { padding: 20px; }
+            .plan-grid { grid-template-columns: 1fr; }
+            .chart-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 个人工作汇报</h1>
+            <p>2022 - 2026 年度工作总结与规划</p>
+        </div>
+
+        <!-- 一、个人情况 -->
+        <div class="section">
+            <h2 class="section-title">一、岗位经历</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">📅 2022 年 2 月</div>
+                    <div class="timeline-title">🛡️ 保险代运营</div>
+                    <div class="timeline-content">
+                        接管<span class="highlight">人保财险、人保健康</span> 2 大核心保司，一人承担多人工作，获得甲方和公司高度认可，为公司提升利润率
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">📅 2023 年 4 月 - 12 月（8 个月）</div>
+                    <div class="timeline-title">👥 电商组长</div>
+                    <div class="timeline-content">
+                        管理<span class="highlight">10 人团队</span>，带领<span class="highlight">10+ 家保司</span>业务（国寿财、太保财、人保、安盛、美亚等），获得各位领导高度认可
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">📅 2024 年底 - 至今</div>
+                    <div class="timeline-title">🚗 汽车新媒体运营项目统筹</div>
+                    <div class="timeline-content">
+                        从 0-1 搭建汽车新媒体业务，探索<span class="highlight">门店代运营 → CPS 模式 → KA 客户代运营 → 新模式</span>全链路发展
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 二、工作成效 -->
+        <div class="section">
+            <h2 class="section-title">二、工作成效</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">4695 万</div>
+                    <div class="stat-label">人保财支付宝全年保费（2022）</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">+245%</div>
+                    <div class="stat-label">同比 2021 年增长</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">7380 万</div>
+                    <div class="stat-label">太保财免费流量保费（2023）</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">14189 条</div>
+                    <div class="stat-label">KA 客户半年线索总量</div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-box">
+                    <h3 style="text-align:center; margin-bottom:20px; color:#2c3e50;">📈 保费增长趋势</h3>
+                    <canvas id="premiumChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h3 style="text-align:center; margin-bottom:20px; color:#2c3e50;">📊 业务模式占比</h3>
+                    <canvas id="modeChart"></canvas>
+                </div>
+            </div>
+
+            <h3 style="color:#2c3e50; margin:30px 0 20px;">🏆 重点案例成果</h3>
+            <ul class="achievement-list">
+                <li><strong>南宁宝马：</strong>阅读量从几十提升至上万，持续合作 5 个月</li>
+                <li><strong>厦门雷克萨斯：</strong>厂家竞赛首月全国第二，次月<span class="highlight">全国第一</span>，赢得 2.4 万元奖励</li>
+                <li><strong>杭州问界：</strong>创"内容种草 + 社群裂变 + 低价钩子"野生账号模型，小定 35 单、大定 26 单</li>
+                <li><strong>中升集团 KA：</strong>10 个小红书账号 +10 个咸鱼账号，单月线索峰值突破<span class="highlight">4500+ 条</span></li>
+                <li><strong>国寿财：</strong>运营推广联动月保费从 28W 提升到<span class="highlight">150 万</span></li>
+                <li><strong>太保财：</strong>免费流量挖掘带来 7380 万保费，环比提升<span class="highlight">269%</span></li>
+                <li><strong>支付宝五福活动：</strong>单场曝光<span class="highlight">500 万+</span></li>
+            </ul>
+        </div>
+
+        <!-- 三、能力成长 -->
+        <div class="section">
+            <h2 class="section-title">三、能力成长历程</h2>
+            <div class="chart-row">
+                <div class="chart-box">
+                    <h3 style="text-align:center; margin-bottom:20px; color:#2c3e50;">🎯 能力进阶路径</h3>
+                    <canvas id="skillChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h3 style="text-align:center; margin-bottom:20px; color:#2c3e50;">📋 核心能力</h3>
+                    <ul class="achievement-list" style="margin-top:20px;">
+                        <li><strong>商务谈判能力：</strong>3 个月全程外出跑业务，成长为一个可以走出去商务谈判的人</li>
+                        <li><strong>内容运营能力：</strong>从电商运营到内容运营的转变，对账号方向、内容选题有更深刻理解</li>
+                        <li><strong>全链路闭环：</strong>搭建 - 内容 - 投流 - 客户承接 - 线索挖掘 - 线索转化</li>
+                        <li><strong>团队统筹能力：</strong>可胜任 10+ 人员的项目统筹和管理</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 四、履职优势 -->
+        <div class="section">
+            <h2 class="section-title">四、履职优势</h2>
+            <div class="stats-grid">
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="stat-number">🎯</div>
+                    <div class="stat-label">专业匹配度高<br/>保险 + 电商 + 汽车全领域经验</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="stat-number">💡</div>
+                    <div class="stat-label">创新能力强<br/>从 0-1 搭建多个业务模式</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <div class="stat-number">🚀</div>
+                    <div class="stat-label">执行力突出<br/>3 周快速推进 KA 客户签约</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <div class="stat-number">👥</div>
+                    <div class="stat-label">团队管理经验<br/>10 人团队领导经验</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 五、未来规划 -->
+        <div class="section">
+            <h2 class="section-title">五、未来规划</h2>
+            
+            <div class="chart-box" style="margin:30px 0;">
+                <h3 style="text-align:center; margin-bottom:20px; color:#2c3e50;">🎯 职业发展路径</h3>
+                <canvas id="careerChart" height="100"></canvas>
+            </div>
+
+            <div class="plan-grid">
+                <div class="plan-card">
+                    <h4>🤖 AI 战略定位</h4>
+                    <ul>
+                        <li>将 AI 作为团队标配</li>
+                        <li>从"人力密集型"转向"智力密集型"</li>
+                        <li>培养团队 AI 使用能力</li>
+                        <li>提升提问和指令优化能力</li>
+                    </ul>
+                </div>
+                <div class="plan-card">
+                    <h4>👥 团队规划</h4>
+                    <ul>
+                        <li><strong>KA 客户型：</strong>AI 不易替代，需更积极服务</li>
+                        <li><strong>生产型：</strong>AI 完全可替代，1 人负责 10+ 账号</li>
+                        <li>做 AI 的统筹者而非执行者</li>
+                        <li>高效多项目并行，不重人力投入</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="chart-box" style="margin:30px 0;">
+                <h3 style="text-align:center; margin-bottom:20px; color:#2c3e50;">⚡ AI 提效实施路径</h3>
+                <canvas id="aiEfficiencyChart"></canvas>
+            </div>
+
+            <div class="plan-grid">
+                <div class="plan-card" style="border-left-color: #3498db;">
+                    <h4>📱 门店小红书</h4>
+                    <ul>
+                        <li>AI 刷数据（提升账号 KPI）</li>
+                        <li>AI 自动评论 + 回复消息</li>
+                        <li>通用 AI 模版（权益线索/厂家竞赛/个人 IP）</li>
+                    </ul>
+                </div>
+                <div class="plan-card" style="border-left-color: #9b59b6;">
+                    <h4>💰 吉利微信豆投放</h4>
+                    <ul>
+                        <li>AI 投放 + AI 统计数据 + AI 协助结算</li>
+                        <li>分 3-4 阶段逐步提升</li>
+                        <li>持续缩减人力成本</li>
+                    </ul>
+                </div>
+                <div class="plan-card" style="border-left-color: #e74c3c;">
+                    <h4>🏪 车云店</h4>
+                    <ul>
+                        <li>AI 客服回复</li>
+                        <li>AI 统计数据 + AI 发货</li>
+                        <li>分阶段提效，逐步缩减人力</li>
+                    </ul>
+                </div>
+                <div class="plan-card" style="border-left-color: #f39c12;">
+                    <h4>🛒 CPS 项目</h4>
+                    <ul>
+                        <li>闲鱼 AI 自动回复</li>
+                        <li>小红书 AI 每日截留</li>
+                        <li>分阶段提升效率</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>感谢聆听 · 期待与您共创未来</p>
+            <p style="margin-top:10px; opacity:0.7;">2026 年 4 月</p>
+        </div>
+    </div>
+
+    <script>
+        // 保费增长趋势图
+        new Chart(document.getElementById('premiumChart'), {
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023'],
+                datasets: [{
+                    label: '人保财保费（万）',
+                    data: [1360, 4695, 5200],
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: '太保财保费（万）',
+                    data: [2000, 5500, 7380],
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // 业务模式占比
+        new Chart(document.getElementById('modeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['门店代运营', 'CPS 模式', 'KA 客户', '保险电商'],
+                datasets: [{
+                    data: [25, 20, 30, 25],
+                    backgroundColor: ['#3498db', '#e74c3c', '#27ae60', '#f39c12']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // 能力进阶图
+        new Chart(document.getElementById('skillChart'), {
+            type: 'radar',
+            data: {
+                labels: ['商务谈判', '内容运营', '团队管理', '项目统筹', '数据分析', '客户沟通'],
+                datasets: [{
+                    label: '2022 年',
+                    data: [3, 5, 4, 4, 5, 4],
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.2)'
+                }, {
+                    label: '2026 年',
+                    data: [8, 9, 8, 9, 8, 9],
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.2)'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 10
+                    }
+                }
+            }
+        });
+
+        // 职业发展路径
+        new Chart(document.getElementById('careerChart'), {
+            type: 'bar',
+            data: {
+                labels: ['2026', '2027', '2028', '2029'],
+                datasets: [{
+                    label: '职业目标',
+                    data: [6, 7, 8, 9],
+                    backgroundColor: ['#3498db', '#27ae60', '#f39c12', '#e74c3c'],
+                    borderColor: ['#2980b9', '#229954', '#d68910', '#c0392b'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const levels = ['现任', '资深主管', '高级主管', '经理'];
+                                return levels[context.dataIndex];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10,
+                        ticks: {
+                            callback: function(value) {
+                                const labels = ['', '', '现任', '', '资深主管', '', '高级主管', '', '经理', '', ''];
+                                return labels[value] || '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // AI 提效路径
+        new Chart(document.getElementById('aiEfficiencyChart'), {
+            type: 'line',
+            data: {
+                labels: ['当前', '阶段 1', '阶段 2', '阶段 3', '阶段 4'],
+                datasets: [{
+                    label: '人力成本',
+                    data: [100, 75, 50, 30, 20],
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'AI 提效',
+                    data: [0, 25, 50, 70, 80],
+                    borderColor: '#27ae60',
+                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
