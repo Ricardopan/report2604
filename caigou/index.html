@@ -39,18 +39,18 @@
   .bh .cnt.full{color:var(--green)}
   .bmeta{font-size:12.5px;color:var(--muted);margin:0 0 7px 32px}
   .bmeta .t{color:var(--blue);font-weight:600}
-  label.item,div.item{display:flex;align-items:flex-start;gap:10px;padding:8px 9px;border-radius:9px;
+  .item{display:flex;align-items:flex-start;gap:10px;padding:8px 9px;border-radius:9px;
     border-bottom:1px solid #f1f3f5}
-  label.item{cursor:pointer}
-  label.item:last-child,div.item:last-child{border-bottom:none}
-  label.item:hover{background:#fafbfc}
-  label.item input{display:none}
+  .item{cursor:pointer}
+  .item:last-child,.item:last-child{border-bottom:none}
+  .item:hover{background:#fafbfc}
+  .item input{display:none}
   .box{flex:0 0 auto;width:20px;height:20px;border:2px solid #cbd5e1;border-radius:6px;margin-top:1px;
     display:flex;align-items:center;justify-content:center;transition:.12s;background:#fff}
   .box::after{content:"";width:10px;height:6px;border-left:2.4px solid #fff;border-bottom:2.4px solid #fff;
     transform:rotate(-45deg) translateY(-1px);opacity:0;transition:.12s}
-  label.item.done .box{background:var(--green);border-color:var(--green)}
-  label.item.done .box::after{opacity:1}
+  .item.done .box{background:#2ea043;border-color:#2ea043}
+  .item.done .box::after{opacity:1}
   .main{flex:1 1 auto;min-width:0}
   .nm{font-size:14px;font-weight:600}
   .nt{font-size:12px;color:var(--muted);margin-top:1px}
@@ -61,11 +61,11 @@
   .t-must{background:#fdeaea;color:var(--red)} .t-measure{background:#fff4e5;color:#b45309}
   .t-1111{background:#e8f0fe;color:var(--blue)} .t-end{background:#f0ecfb;color:var(--violet)}
   .t-gray{background:#f1f3f5;color:#6b7280} .t-add{background:#e7f7ee;color:#0f7b46}
-  label.item.done .nm{text-decoration:line-through;color:#9aa1ab}
-  label.item.done .pr{color:#9aa1ab} label.item.done .nt{color:#b9bfc7}
-  label.item.done{background:#f7fdf9}
+  .item.done .nm{text-decoration:line-through;color:#9aa1ab}
+  .item.done .pr{color:#9aa1ab} .item.done .nt{color:#b9bfc7}
+  .item.done{background:#f7fdf9}
   .acts{display:flex;gap:2px;align-items:flex-start;flex:0 0 auto;opacity:.35;transition:.12s}
-  label.item:hover .acts,div.item:hover .acts{opacity:1}
+  .item:hover .acts,.item:hover .acts{opacity:1}
   .ic{width:26px;height:26px;border:1px solid var(--line);background:#fff;border-radius:7px;font-size:12.5px;
     cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#6b7280}
   .ic:hover{border-color:#c3cad3;color:#111}
@@ -127,7 +127,7 @@
 
   <header>
     <h1>🛒 采购清单</h1>
-    <div class="sub">安樾杭璟府 ｜ v3 线上版 ｜ 红线：10/1 通风 → 12月底 CMA → 1月初入住</div>
+    <div class="sub">安樾杭璟府 ｜ v3.2 线上版 ｜ 红线：10/1 通风 → 12月底 CMA → 1月初入住</div>
     <div class="syncline">
       <span class="pill" id="syncPill">☁️ 未连接</span>
       <span class="pill act" id="cfgBtn">云同步设置</span>
@@ -170,7 +170,7 @@
     <div class="say">排序四问：① 甲醛/异味源？→ 越早越好 ② 要现场量尺？→ 排在该工序之后 ③ 有大促价差不急用？→ 压双11预售 ④ 装饰/易碎最终落位？→ 保洁后、家具进场后</div>
   </div>
 
-  <footer>太子 整理 · v3 · 每产品一行 · 状态自动同步到仓库</footer>
+  <footer>太子 整理 · v3.2 · 每产品一行 · 状态自动同步到仓库</footer>
 </div>
 
 <div class="mask" id="cfgMask">
