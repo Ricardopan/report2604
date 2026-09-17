@@ -91,6 +91,7 @@
   .money tr:last-child td{border-bottom:none}
   .form{background:#f7faff;border:1px solid #d8e6fb;border-radius:10px;padding:10px;margin:6px 0}
   .form .fr{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+  #cfgMask select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;background:#fff}
   .form input,.form select,.form textarea{flex:1 1 120px;min-width:0;padding:7px 9px;border:1px solid var(--line);
     border-radius:8px;font-size:13px;font-family:inherit;background:#fff}
   .form input.wide{flex:1 1 100%}
@@ -127,7 +128,7 @@
 
   <header>
     <h1>🛒 采购清单</h1>
-    <div class="sub">安樾杭璟府 ｜ v3.2 线上版 ｜ 红线：10/1 通风 → 12月底 CMA → 1月初入住</div>
+    <div class="sub">安樾杭璟府 ｜ v4.0 线上版 ｜ 红线：10/1 通风 → 12月底 CMA → 1月初入住</div>
     <div class="syncline">
       <span class="pill" id="syncPill">☁️ 未连接</span>
       <span class="pill act" id="cfgBtn">云同步设置</span>
@@ -170,25 +171,40 @@
     <div class="say">排序四问：① 甲醛/异味源？→ 越早越好 ② 要现场量尺？→ 排在该工序之后 ③ 有大促价差不急用？→ 压双11预售 ④ 装饰/易碎最终落位？→ 保洁后、家具进场后</div>
   </div>
 
-  <footer>太子 整理 · v3.2 · 每产品一行 · 状态自动同步到仓库</footer>
+  <footer>太子 整理 · v4.0 · 每产品一行 · 状态自动同步到仓库</footer>
 </div>
 
 <div class="mask" id="cfgMask">
   <div class="modal">
     <h3>☁️ 云同步设置</h3>
-    <p>状态保存在你自己的 GitHub 仓库里（<code id="cfgRepoShow"></code> 的 <code id="cfgPathShow"></code>），多设备共用一份。</p>
-    <div class="row"><label>仓库 owner</label><input id="fOwner" placeholder="Ricardopan"></div>
-    <div class="row"><label>仓库名</label><input id="fRepo" placeholder="report2604"></div>
-    <div class="row"><label>分支</label><input id="fBranch" placeholder="main"></div>
-    <div class="row"><label>状态文件路径</label><input id="fPath" placeholder="caigou/state.json"></div>
-    <div class="row"><label>GitHub Token（只存本机浏览器，不写进网页）</label><input id="fToken" type="password" placeholder="github_pat_..." autocomplete="off"></div>
-    <p>💡 <b>建 token 步骤（1 分钟）</b>：GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → Generate new token →<br>
-      Repository access 只选 <b>report2604</b> → Permissions：<b>Contents = Read and write</b> → 有效期建议 90 天 → 生成后粘到上面。</p>
-    <p>🔒 这个 token 只存在你当前浏览器（localStorage），不会上传、不会写进网页文件；换设备需要重新填一次。</p>
+    <p>两种方式选一个。<b>要分享给家人 → 选「云端代理」</b>：家人打开你发的链接就能用，什么都不用填。</p>
+    <div class="row"><label>同步方式</label>
+      <select id="fMode">
+        <option value="worker">云端代理（推荐 · 家人零配置）</option>
+        <option value="gh">GitHub 直连（每台设备都要填 token）</option>
+      </select></div>
+
+    <div id="wBox">
+      <div class="row"><label>Worker 地址</label><input id="fWorker" placeholder="https://xxx.workers.dev"></div>
+      <div class="row"><label>口令（可选 · 防陌生人乱改）</label><input id="fKey" placeholder="家里统一口令"></div>
+      <p>🟢 密钥（GitHub token）存在云端 Worker 里，<b>不进任何人的浏览器</b>，家人不需要任何账号。</p>
+      <p>🔗 分享给家人时用这个格式（会自动记住，打开即用）：<br>
+        <code id="shareTpl">https://…/caigou/#w=Worker地址&key=口令</code></p>
+    </div>
+
+    <div id="ghBox">
+      <div class="row"><label>仓库 owner</label><input id="fOwner" placeholder="Ricardopan"></div>
+      <div class="row"><label>仓库名</label><input id="fRepo" placeholder="report2604"></div>
+      <div class="row"><label>分支</label><input id="fBranch" placeholder="main"></div>
+      <div class="row"><label>状态文件路径</label><input id="fPath" placeholder="caigou/state.json"></div>
+      <div class="row"><label>GitHub Token（只存本机浏览器，不写进网页）</label><input id="fToken" type="password" placeholder="github_pat_..." autocomplete="off"></div>
+      <p>💡 建 token：GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → 只授权 <b>report2604</b> → <b>Contents = Read and write</b> → 90 天。</p>
+    </div>
+
     <div class="mb">
       <button class="pri" id="cfgSave">保存并连接</button>
       <button id="cfgClose">关闭</button>
-      <button class="dg" id="cfgClear">断开（清除 token）</button>
+      <button class="dg" id="cfgClear">断开（清除本机密钥）</button>
     </div>
   </div>
 </div>
@@ -255,13 +271,16 @@ const ITEMS = [
 
 /* ============ 2. 配置 / 状态 ============ */
 const CFG_KEY='cq_cfg_v1', ST_KEY='cq_state_v1';
-const DEF_CFG={owner:'Ricardopan',repo:'report2604',branch:'main',path:'caigou/state.json',token:''};
+const DEF_CFG={mode:'worker',owner:'Ricardopan',repo:'report2604',branch:'main',path:'caigou/state.json',worker:'',key:'',token:''};
 const DEF_ST={v:1,updatedAt:null,checked:{},deleted:[],added:[],edited:{}};
 let cfg=Object.assign({},DEF_CFG), st=JSON.parse(JSON.stringify(DEF_ST));
-let remoteSha=null, editingId=null, addingBatch=null, showDeleted=false;
+let remoteRev=null, editingId=null, addingBatch=null, showDeleted=false;
 let saveTimer=null, dirty=false;
 const LS=('localStorage' in window);
-try{ if(LS){ const c=localStorage.getItem(CFG_KEY); if(c) cfg=Object.assign({},DEF_CFG,JSON.parse(c));
+try{ if(LS){ const c=localStorage.getItem(CFG_KEY);
+  if(c){ const sc=JSON.parse(c);
+    if(sc.mode===undefined) sc.mode=(sc.token?'gh':'worker');   // 兼容旧配置：已填 token 的继续走直连
+    cfg=Object.assign({},DEF_CFG,sc); }
   const s=localStorage.getItem(ST_KEY); if(s) st=Object.assign({},DEF_ST,JSON.parse(s)); } }catch(e){}
 
 function persistLocal(){ if(!LS) return; try{ localStorage.setItem(CFG_KEY,JSON.stringify(cfg));
@@ -271,6 +290,52 @@ function toast(t){ const el=document.getElementById('toast'); el.textContent=t; 
 function apiUrl(p){ return 'https://api.github.com/repos/'+cfg.owner+'/'+cfg.repo+'/contents/'+(p||cfg.path); }
 function headers(){ return cfg.token?{Authorization:'Bearer '+cfg.token,Accept:'application/vnd.github+json'}
   :{Accept:'application/vnd.github+json'}; }
+function connected(){ return cfg.mode==='worker' ? !!cfg.worker : !!cfg.token; }
+function apiBase(){ return (cfg.worker||'').replace(/\/+$/,''); }
+async function apiGet(){                       // → {rev, data}
+  if(cfg.mode==='worker'){
+    const r=await fetch(apiBase()+'/state',{headers:{'X-Key':cfg.key||''},cache:'no-store'});
+    if(r.status===403) throw new Error('403 口令不对');
+    if(!r.ok) throw new Error('http'+r.status);
+    return await r.json();
+  }
+  const r=await fetch(apiUrl(),{headers:headers(),cache:'no-store'});
+  if(r.status===404) return {rev:null,data:null};
+  if(r.status===401||r.status===403) throw new Error('403 Token 无效或无权限');
+  if(!r.ok) throw new Error('http'+r.status);
+  const j=await r.json();
+  return {rev:j.sha,data:JSON.parse(fromB64(j.content))};
+}
+async function apiPut(data,rev){               // → {rev}
+  if(cfg.mode==='worker'){
+    const r=await fetch(apiBase()+'/state',{method:'PUT',
+      headers:{'Content-Type':'application/json','X-Key':cfg.key||''},
+      body:JSON.stringify({rev:(rev===undefined?null:rev),data:data})});
+    if(r.status===403) throw new Error('403 口令不对');
+    if(r.status===409) throw new Error('conflict');
+    if(!r.ok) throw new Error('http'+r.status);
+    return await r.json();
+  }
+  const body={message:'采购清单状态 '+new Date().toLocaleString('zh-CN'),
+    content:toB64(JSON.stringify(data,null,1)),branch:cfg.branch};
+  if(rev) body.sha=rev;
+  const r=await fetch(apiUrl(),{method:'PUT',headers:headers(),body:JSON.stringify(body)});
+  if(r.status===401||r.status===403) throw new Error('403 Token 无写权限');
+  if(r.status===409||r.status===422) throw new Error('conflict');
+  if(!r.ok) throw new Error('http'+r.status);
+  const j=await r.json();
+  return {rev:(j&&j.content&&j.content.sha)||null};
+}
+function normState(o){
+  o=o||{};
+  const c={}; Object.keys(o.checked||{}).sort().forEach(k=>{ if(o.checked[k]) c[k]=true; });
+  const d=[...(o.deleted||[])].sort();
+  const am={}; (o.added||[]).forEach(x=>am[x.id]=x);
+  const e={}; Object.keys(o.edited||{}).sort().forEach(k=>e[k]=o.edited[k]);
+  return JSON.stringify({c:c,d:d,a:Object.keys(am).sort().map(k=>am[k]),e:e});
+}
+function stateEq(a,b){ return normState(a)===normState(b); }
+function hasLocal(){ return !!((st.deleted||[]).length||(st.added||[]).length||Object.keys(st.checked||{}).length); }
 function toB64(str){ const b=new TextEncoder().encode(str); let s=''; for(let i=0;i<b.length;i++) s+=String.fromCharCode(b[i]); return btoa(s); }
 function fromB64(b64){ const bin=atob((b64||'').replace(/\s/g,'')); const a=new Uint8Array(bin.length);
   for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return new TextDecoder().decode(a); }
@@ -304,48 +369,51 @@ function setSync(mode,msg){
   else { p.textContent='☁️ 就绪'; }
 }
 async function pull(){
-  if(!cfg.token){ setSync('local'); return; }
+  if(!connected()){ setSync('local'); return; }
   setSync('saving');
   try{
-    const r=await fetch(apiUrl(),{headers:headers(),cache:'no-store'});
-    if(r.status===404){ // 云端还没有状态文件：若本机已有改动，先把本机上传上去
-      remoteSha=null; st.updatedAt=st.updatedAt||new Date().toISOString(); persistLocal();
-      if((st.deleted||[]).length||(st.added||[]).length||Object.keys(st.checked||{}).length) schedulePush(200);
-      else setSync('saved');
+    const res=await apiGet();
+    remoteRev=(res.rev===undefined?null:res.rev);
+    if(!res.data){ // 云端还没有状态：把本机已有改动先传上去
+      st.updatedAt=st.updatedAt||new Date().toISOString(); persistLocal();
+      if(hasLocal()) schedulePush(200); else setSync('saved');
       return; }
-    if(r.status===401||r.status===403){ setSync('err','Token 无效或无权限'); return; }
-    if(!r.ok) throw 0;
-    const j=await r.json(); remoteSha=j.sha;
-    const remote=JSON.parse(fromB64(j.content));
-    const merged=mergeState(st,remote);
+    const merged=mergeState(st,res.data);
+    const needPush=!stateEq(merged,res.data);   // 只有"本机有、云端没有"的东西才回写
     merged.updatedAt=new Date().toISOString();
-    const changed=JSON.stringify(merged)!==JSON.stringify(st);
-    st=merged; persistLocal(); renderAll(); setSync('saved');
-    if(changed) schedulePush(300);
-    else if(JSON.stringify(remote)!==JSON.stringify(st)) schedulePush(300);
-  }catch(e){ setSync('err','读不到云端，已用本机数据'); }
+    const changedForUI=JSON.stringify(merged)!==JSON.stringify(st);
+    st=merged; persistLocal(); if(changedForUI) renderAll(); setSync('saved');
+    if(needPush) schedulePush(300);
+  }catch(e){
+    if(String(e.message).indexOf('403')===0) setSync('err',String(e.message).slice(4)||'口令/权限不对');
+    else setSync('err','读不到云端，已用本机数据');
+  }
 }
 async function pushNow(){
-  if(!cfg.token) return;
+  if(!connected()) return;
   setSync('saving');
   try{
-    const body={message:'采购清单状态 '+new Date().toLocaleString('zh-CN'),content:toB64(JSON.stringify(st,null,1)),branch:cfg.branch};
-    if(remoteSha) body.sha=remoteSha;
-    let r=await fetch(apiUrl(),{method:'PUT',headers:headers(),body:JSON.stringify(body)});
-    if(r.status===409||r.status===422){ // sha 过期：重取后重试一次
-      const g=await fetch(apiUrl(),{headers:headers(),cache:'no-store'});
-      if(g.ok){ remoteSha=(await g.json()).sha; body.sha=remoteSha;
-        r=await fetch(apiUrl(),{method:'PUT',headers:headers(),body:JSON.stringify(body)}); }
-    }
-    if(r.status===401||r.status===403){ setSync('err','Token 无写权限'); return; }
-    if(!r.ok) throw 0;
-    const j=await r.json(); if(j&&j.content&&j.content.sha) remoteSha=j.content.sha;
+    const res=await apiPut(st,remoteRev);
+    if(res && res.rev!==undefined) remoteRev=res.rev;
     dirty=false; setSync('saved');
-  }catch(e){ setSync('err','保存失败，已存本机'); }
+  }catch(e){
+    if(String(e.message)==='conflict'){        // 家人先写了：拉回→合并→再写一次
+      try{
+        const cur=await apiGet();
+        remoteRev=(cur.rev===undefined?null:cur.rev);
+        if(cur.data){ st=mergeState(st,cur.data); st.updatedAt=new Date().toISOString(); persistLocal(); renderAll(); }
+        const res2=await apiPut(st,remoteRev);
+        if(res2 && res2.rev!==undefined) remoteRev=res2.rev;
+        dirty=false; setSync('saved'); return;
+      }catch(e2){ setSync('err','冲突合并失败，已存本机'); return; }
+    }
+    if(String(e.message).indexOf('403')===0){ setSync('err',String(e.message).slice(4)||'口令/权限不对'); return; }
+    setSync('err','保存失败，已存本机');
+  }
 }
 function schedulePush(ms){
   dirty=true; persistLocal();
-  if(!cfg.token){ setSync('local'); return; }
+  if(!connected()){ setSync('local'); return; }
   clearTimeout(saveTimer);
   setSync('saving');
   saveTimer=setTimeout(pushNow, ms||1200);
@@ -484,7 +552,7 @@ document.addEventListener('click',ev=>{
     const f=document.querySelector('.form input'); if(f) f.focus(); }
 });
 document.getElementById('btnPrint').onclick=()=>window.print();
-document.getElementById('btnSync').onclick=()=>{ if(!cfg.token){ openCfg(); toast('先连接云端'); return; } pull().then(()=>toast('已同步')); };
+document.getElementById('btnSync').onclick=()=>{ if(!connected()){ openCfg(); toast('先连接云端'); return; } pull().then(()=>toast('已同步')); };
 document.getElementById('btnReset').onclick=()=>{
   if(!confirm('清空所有打勾？（不影响删除/新增）')) return;
   st.checked={}; persist(); renderAll(); toast('已清空打勾');
@@ -507,33 +575,62 @@ document.getElementById('delToggle').onclick=()=>{
 };
 /* 云同步设置 */
 const mask=document.getElementById('cfgMask');
+function syncModeUI(){
+  const w=document.getElementById('fMode').value==='worker';
+  document.getElementById('wBox').style.display=w?'':'none';
+  document.getElementById('ghBox').style.display=w?'none':'';
+}
+document.getElementById('fMode').onchange=syncModeUI;
+function shareLink(){
+  const base=location.origin+location.pathname;
+  const w=(document.getElementById('fWorker').value||cfg.worker||'').replace(/\/+$/,'');
+  const k=document.getElementById('fKey').value||cfg.key||'';
+  if(!w) return base;
+  return base+'#w='+encodeURIComponent(w)+(k?('&key='+encodeURIComponent(k)):'');
+}
 function openCfg(){
+  document.getElementById('fMode').value=cfg.mode==='worker'?'worker':'gh';
+  document.getElementById('fWorker').value=cfg.worker||'';
+  document.getElementById('fKey').value=cfg.key||'';
   document.getElementById('fOwner').value=cfg.owner; document.getElementById('fRepo').value=cfg.repo;
   document.getElementById('fBranch').value=cfg.branch; document.getElementById('fPath').value=cfg.path;
   document.getElementById('fToken').value=cfg.token||'';
-  document.getElementById('cfgRepoShow').textContent=cfg.owner+'/'+cfg.repo;
-  document.getElementById('cfgPathShow').textContent=cfg.path;
+  syncModeUI();
+  const t=document.getElementById('shareTpl'); if(t){ t.textContent=shareLink(); }
   mask.classList.add('on');
 }
 document.getElementById('cfgBtn').onclick=openCfg;
 document.getElementById('cfgClose').onclick=()=>mask.classList.remove('on');
-document.getElementById('cfgClear').onclick=()=>{ cfg.token=''; persistLocal(); setSync('off'); mask.classList.remove('on'); toast('已断开云端（仍存本机）'); };
+document.getElementById('cfgClear').onclick=()=>{ cfg.token=''; cfg.key=''; remoteRev=null; persistLocal(); setSync('off'); mask.classList.remove('on'); toast('已断开云端（仍存本机）'); };
 document.getElementById('cfgSave').onclick=async()=>{
+  cfg.mode=document.getElementById('fMode').value;
+  cfg.worker=document.getElementById('fWorker').value.trim().replace(/\/+$/,'');
+  cfg.key=document.getElementById('fKey').value.trim();
   cfg.owner=document.getElementById('fOwner').value.trim()||DEF_CFG.owner;
   cfg.repo=document.getElementById('fRepo').value.trim()||DEF_CFG.repo;
   cfg.branch=document.getElementById('fBranch').value.trim()||'main';
   cfg.path=document.getElementById('fPath').value.trim()||DEF_CFG.path;
   cfg.token=document.getElementById('fToken').value.trim();
-  persistLocal(); mask.classList.remove('on');
-  if(!cfg.token){ setSync('off'); return; }
+  remoteRev=null; persistLocal(); mask.classList.remove('on');
+  if(!connected()){ setSync('off'); return; }
   await pull(); toast('已连接');
 };
 /* 启动 */
 document.getElementById('delToggle').textContent='显示已删除';
+/* 分享链接：#w=Worker地址&key=口令 → 自动记住，家人零配置 */
+(function importHash(){
+  const h=location.hash.replace(/^#/,''); if(!h) return;
+  const p=new URLSearchParams(h); let hit=false;
+  const w=p.get('w')||p.get('worker');
+  if(w){ cfg.mode='worker'; cfg.worker=w.replace(/\/+$/,''); hit=true; }
+  if(p.get('key')){ cfg.key=p.get('key'); hit=true; }
+  if(p.get('token')){ cfg.mode='gh'; cfg.token=p.get('token'); hit=true; }
+  if(hit){ persistLocal(); try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} }
+})();
 renderAll();
-if(cfg.token) pull(); else setSync(LS?'off':'local');
+if(connected()) pull(); else setSync(LS?'off':'local');
 if(!LS) document.getElementById('storeHint').textContent='⚠️ 本浏览器不支持本地保存，且未连云端——改动会丢，请用 Chrome/Safari 打开。';
-window.addEventListener('beforeunload',e=>{ if(dirty&&cfg.token){ e.preventDefault(); e.returnValue=''; } });
+window.addEventListener('beforeunload',e=>{ if(dirty&&connected()){ e.preventDefault(); e.returnValue=''; } });
 </script>
 </body>
 </html>
