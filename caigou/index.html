@@ -308,7 +308,11 @@ async function pull(){
   setSync('saving');
   try{
     const r=await fetch(apiUrl(),{headers:headers(),cache:'no-store'});
-    if(r.status===404){ remoteSha=null; st.updatedAt=st.updatedAt||new Date().toISOString(); persistLocal(); setSync('saved'); return; }
+    if(r.status===404){ // 云端还没有状态文件：若本机已有改动，先把本机上传上去
+      remoteSha=null; st.updatedAt=st.updatedAt||new Date().toISOString(); persistLocal();
+      if((st.deleted||[]).length||(st.added||[]).length||Object.keys(st.checked||{}).length) schedulePush(200);
+      else setSync('saved');
+      return; }
     if(r.status===401||r.status===403){ setSync('err','Token 无效或无权限'); return; }
     if(!r.ok) throw 0;
     const j=await r.json(); remoteSha=j.sha;
