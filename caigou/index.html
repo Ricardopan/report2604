@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<!-- 采购清单 · 线上版 v3
+     源文件（本地真源）：workspace 采购清单_20260917.html
+     线上部署路径：github.com/Ricardopan/report2604 → caigou/index.html
+     状态存储：同仓库 caigou/state.json（通过 GitHub Contents API 读写）
+     ⚠️ 此文件不含任何密钥；token 只存在使用者浏览器本地。
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>采购清单 · 安樾杭璟府</title>
+<style>
+  :root{--bg:#f5f6f8;--card:#fff;--line:#e6e8ec;--ink:#1f2430;--muted:#6b7280;
+    --red:#e5484d;--amber:#f5a524;--green:#2ea043;--blue:#3b82f6;--violet:#8b5cf6;}
+  *{box-sizing:border-box}
+  body{margin:0;padding:16px;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55}
+  .wrap{max-width:940px;margin:0 auto}
+  header{background:linear-gradient(135deg,#1e3a8a,#0f766e);color:#fff;border-radius:16px;padding:18px 20px;margin-bottom:12px}
+  header h1{margin:0 0 4px;font-size:20px}
+  header .sub{font-size:12.5px;opacity:.9}
+  .syncline{margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px}
+  .pill{background:rgba(255,255,255,.18);border-radius:20px;padding:3px 11px;font-weight:600}
+  .pill.ok{background:rgba(52,211,153,.28)}
+  .pill.warn{background:rgba(245,165,36,.3)}
+  .pill.err{background:rgba(229,72,77,.35)}
+  .pill.act{cursor:pointer;text-decoration:underline}
+  .prog{margin-top:11px;background:rgba(255,255,255,.15);border-radius:10px;padding:11px 13px}
+  .prog .l1{display:flex;justify-content:space-between;font-size:13px;font-weight:600}
+  .bar{height:9px;background:rgba(0,0,0,.25);border-radius:99px;margin-top:7px;overflow:hidden}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#34d399,#10b981);border-radius:99px;transition:width .25s}
+  .prog .l2{font-size:12px;opacity:.92;margin-top:6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:11px;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .bh{display:flex;align-items:center;gap:9px;margin:0 0 3px;font-size:15px;font-weight:700}
+  .bh .idx{width:23px;height:23px;border-radius:50%;background:#1f2430;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex:0 0 auto}
+  .bh .cnt{margin-left:auto;font-size:12px;font-weight:600;color:var(--muted)}
+  .bh .cnt.full{color:var(--green)}
+  .bmeta{font-size:12.5px;color:var(--muted);margin:0 0 7px 32px}
+  .bmeta .t{color:var(--blue);font-weight:600}
+  label.item,div.item{display:flex;align-items:flex-start;gap:10px;padding:8px 9px;border-radius:9px;
+    border-bottom:1px solid #f1f3f5}
+  label.item{cursor:pointer}
+  label.item:last-child,div.item:last-child{border-bottom:none}
+  label.item:hover{background:#fafbfc}
+  label.item input{display:none}
+  .box{flex:0 0 auto;width:20px;height:20px;border:2px solid #cbd5e1;border-radius:6px;margin-top:1px;
+    display:flex;align-items:center;justify-content:center;transition:.12s;background:#fff}
+  .box::after{content:"";width:10px;height:6px;border-left:2.4px solid #fff;border-bottom:2.4px solid #fff;
+    transform:rotate(-45deg) translateY(-1px);opacity:0;transition:.12s}
+  label.item.done .box{background:var(--green);border-color:var(--green)}
+  label.item.done .box::after{opacity:1}
+  .main{flex:1 1 auto;min-width:0}
+  .nm{font-size:14px;font-weight:600}
+  .nt{font-size:12px;color:var(--muted);margin-top:1px}
+  .rt{flex:0 0 auto;text-align:right;white-space:nowrap}
+  .pr{font-size:13px;font-variant-numeric:tabular-nums;font-weight:600;color:#111}
+  .pr.est{color:var(--muted);font-weight:500;font-size:12px}
+  .tg{display:inline-block;margin-top:3px;font-size:11px;padding:1px 7px;border-radius:20px;font-weight:600}
+  .t-must{background:#fdeaea;color:var(--red)} .t-measure{background:#fff4e5;color:#b45309}
+  .t-1111{background:#e8f0fe;color:var(--blue)} .t-end{background:#f0ecfb;color:var(--violet)}
+  .t-gray{background:#f1f3f5;color:#6b7280} .t-add{background:#e7f7ee;color:#0f7b46}
+  label.item.done .nm{text-decoration:line-through;color:#9aa1ab}
+  label.item.done .pr{color:#9aa1ab} label.item.done .nt{color:#b9bfc7}
+  label.item.done{background:#f7fdf9}
+  .acts{display:flex;gap:2px;align-items:flex-start;flex:0 0 auto;opacity:.35;transition:.12s}
+  label.item:hover .acts,div.item:hover .acts{opacity:1}
+  .ic{width:26px;height:26px;border:1px solid var(--line);background:#fff;border-radius:7px;font-size:12.5px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#6b7280}
+  .ic:hover{border-color:#c3cad3;color:#111}
+  .ic.del:hover{border-color:#f3b6b8;color:var(--red);background:#fff5f5}
+  .mk{font-size:10.5px;padding:1px 5px;border-radius:5px;background:#eef2ff;color:#4655d6;margin-left:6px;font-weight:700}
+  .mk.gray{background:#f1f3f5;color:#6b7280}
+  .addbtn{margin:7px 0 0 9px;font-size:12.5px;color:var(--blue);background:none;border:1px dashed #cbd5e1;
+    border-radius:8px;padding:5px 10px;cursor:pointer;font-weight:600;display:inline-block}
+  .addbtn:hover{background:#f7faff}
+  .delrow{background:#fcfcfd}
+  .delrow .nm{text-decoration:line-through;color:#9aa1ab}
+  .tools{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 6px}
+  button.tb{flex:1 1 140px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);
+    font-size:13px;font-weight:600;cursor:pointer}
+  button.tb.primary{background:#1f2430;color:#fff;border-color:#1f2430}
+  button.tb:active{transform:translateY(1px)}
+  .hint{font-size:12px;color:var(--muted);margin:5px 0 13px}
+  .warn{background:#fff7f7;border-left:4px solid var(--red);padding:8px 11px;border-radius:6px;margin:5px 0;font-size:12.8px}
+  .say{background:#f1f8ff;border-left:4px solid var(--blue);padding:8px 11px;border-radius:6px;margin:5px 0;font-size:12.8px}
+  .money{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:12.8px}
+  .money table{width:100%;border-collapse:collapse;margin:6px 0 0}
+  .money td{padding:3px 0;border-bottom:1px solid #eef1f4}
+  .money tr:last-child td{border-bottom:none}
+  .form{background:#f7faff;border:1px solid #d8e6fb;border-radius:10px;padding:10px;margin:6px 0}
+  .form .fr{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+  .form input,.form select,.form textarea{flex:1 1 120px;min-width:0;padding:7px 9px;border:1px solid var(--line);
+    border-radius:8px;font-size:13px;font-family:inherit;background:#fff}
+  .form input.wide{flex:1 1 100%}
+  .form .fb{display:flex;gap:6px}
+  .form .fb button{padding:7px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:13px;
+    font-weight:600;cursor:pointer}
+  .form .fb button.pri{background:#1f2430;color:#fff;border-color:#1f2430}
+  .mask{position:fixed;inset:0;background:rgba(20,24,32,.5);display:none;align-items:center;justify-content:center;
+    padding:16px;z-index:50}
+  .mask.on{display:flex}
+  .modal{background:#fff;border-radius:14px;padding:18px 20px;max-width:520px;width:100%;max-height:88vh;overflow:auto}
+  .modal h3{margin:0 0 10px;font-size:16px}
+  .modal p{margin:6px 0;font-size:12.8px;color:#4b5563}
+  .modal .row{margin:9px 0}
+  .modal label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px;font-weight:600}
+  .modal input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:13.5px}
+  .modal .mb{display:flex;gap:8px;margin-top:14px}
+  .modal .mb button{flex:1;padding:10px;border-radius:9px;border:1px solid var(--line);background:#fff;font-weight:600;
+    font-size:13.5px;cursor:pointer}
+  .modal .mb button.pri{background:#1f2430;color:#fff;border-color:#1f2430}
+  .modal .mb button.dg{color:var(--red);border-color:#f3b6b8}
+  code{background:#f1f3f5;padding:1px 5px;border-radius:5px;font-size:12px}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:8px 0 2px}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1f2430;color:#fff;
+    padding:9px 16px;border-radius:22px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:80}
+  .toast.on{opacity:.95}
+  @media print{.tools,.addbtn,.acts,.syncline{display:none}body{background:#fff;padding:0}.card{break-inside:avoid}}
+  @media(max-width:600px){body{padding:10px}.card{padding:11px}.nm{font-size:13.5px}header h1{font-size:17px}
+    .acts{opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>🛒 采购清单</h1>
+    <div class="sub">安樾杭璟府 ｜ v3 线上版 ｜ 红线：10/1 通风 → 12月底 CMA → 1月初入住</div>
+    <div class="syncline">
+      <span class="pill" id="syncPill">☁️ 未连接</span>
+      <span class="pill act" id="cfgBtn">云同步设置</span>
+      <span class="pill act" id="delToggle">显示已删除</span>
+    </div>
+    <div class="prog">
+      <div class="l1"><span>总进度</span><span id="pct">0%</span></div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="l2" id="pline">已买 0 / 0 项 ｜ 已花 ¥0 ｜ 已知合计 ¥0</div>
+    </div>
+  </header>
+
+  <div class="tools">
+    <button class="tb primary" id="btnPrint">🖨 打印 / 存 PDF</button>
+    <button class="tb" id="btnCopy">📋 复制进度</button>
+    <button class="tb" id="btnSync">🔄 立即同步</button>
+    <button class="tb" id="btnReset">↺ 清空打勾</button>
+  </div>
+  <div class="hint" id="storeHint">改动会自动保存：连了云端就同步到仓库，没连就只存本机浏览器。</div>
+
+  <div id="app"></div>
+
+  <div class="card">
+    <div class="bh"><span class="idx">¥</span>已在途 · 待付尾款（不属于新采购）</div>
+    <div class="money">已买、还差尾款的钱，不是新买的东西——去《装修待办总表》付。
+      <table>
+        <tr><td>全屋智能（华为鸿蒙智家）</td><td style="text-align:right"><b>¥25,000</b></td></tr>
+        <tr><td>厨房不锈钢台面（9/15 已装）</td><td style="text-align:right"><b>¥4,300</b></td></tr>
+        <tr><td>阳台柜 + 吊顶</td><td style="text-align:right"><b>¥1,800</b></td></tr>
+      </table>
+      <div style="margin-top:6px;color:#6b7280">※ 博洛尼 ¥350,000 已付清；不锈钢柜 ¥10,000 尚未下单，已计入第1批。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="bh"><span class="idx">!</span>三个"别买早"的坑</div>
+    <div class="warn"><b>① 别让双11大件 11 月前送到工地</b>——还没保洁、安装位没定型。下单统一约"延迟发货 + 预约安装"。</div>
+    <div class="warn"><b>② 墙布/岩板完成前别买"上墙件"</b>（灯具、挂画、电视壁挂、镜柜）——二次脏、二次打孔。</div>
+    <div class="warn"><b>③ 量尺前别买尺寸件</b>（餐桌椅、茶几、床头柜）——按岛台↔餐边柜实际净空定。</div>
+    <div class="say">排序四问：① 甲醛/异味源？→ 越早越好 ② 要现场量尺？→ 排在该工序之后 ③ 有大促价差不急用？→ 压双11预售 ④ 装饰/易碎最终落位？→ 保洁后、家具进场后</div>
+  </div>
+
+  <footer>太子 整理 · v3 · 每产品一行 · 状态自动同步到仓库</footer>
+</div>
+
+<div class="mask" id="cfgMask">
+  <div class="modal">
+    <h3>☁️ 云同步设置</h3>
+    <p>状态保存在你自己的 GitHub 仓库里（<code id="cfgRepoShow"></code> 的 <code id="cfgPathShow"></code>），多设备共用一份。</p>
+    <div class="row"><label>仓库 owner</label><input id="fOwner" placeholder="Ricardopan"></div>
+    <div class="row"><label>仓库名</label><input id="fRepo" placeholder="report2604"></div>
+    <div class="row"><label>分支</label><input id="fBranch" placeholder="main"></div>
+    <div class="row"><label>状态文件路径</label><input id="fPath" placeholder="caigou/state.json"></div>
+    <div class="row"><label>GitHub Token（只存本机浏览器，不写进网页）</label><input id="fToken" type="password" placeholder="github_pat_..." autocomplete="off"></div>
+    <p>💡 <b>建 token 步骤（1 分钟）</b>：GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → Generate new token →<br>
+      Repository access 只选 <b>report2604</b> → Permissions：<b>Contents = Read and write</b> → 有效期建议 90 天 → 生成后粘到上面。</p>
+    <p>🔒 这个 token 只存在你当前浏览器（localStorage），不会上传、不会写进网页文件；换设备需要重新填一次。</p>
+    <div class="mb">
+      <button class="pri" id="cfgSave">保存并连接</button>
+      <button id="cfgClose">关闭</button>
+      <button class="dg" id="cfgClear">断开（清除 token）</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ 1. 基础数据（我维护的部分，改这里 = 以后更新清单内容） ============ */
+const BATCHES = [
+  {id:'b0', idx:'0', title:'第0批 · 马上定', time:'本周 9/17–9/20',
+   note:'<b>唯一的甲醛源批次</b>：床垫/实木家具生产 2–4 周 + 要散味满 3 个月，晚一周就少一周。循环扇要赶在 10/1 通风启动前到位。'},
+  {id:'b1', idx:'1', title:'第1批 · 量尺锁款', time:'9/22–9/30（岩板装完）',
+   note:'这批<b>先量尺、锁款式</b>（优惠价留到双11下单）。紧前依赖：岛台/餐边柜 + 岩板装完，量早了必错。'},
+  {id:'b2', idx:'2', title:'第2批 · 双11 下单', time:'10/15 预售起 → 11月发货',
+   note:'价格最优窗口，且房子在通风期不急用。⚠️ 下单全部选"延迟发货 / 预约安装"。'},
+  {id:'b3', idx:'3', title:'第3批 · 收尾小件', time:'11月中–12月',
+   note:'装饰件等家具进场、风格落定再买；净化/加湿是冬季关窗期才需要。'},
+  {id:'b4', idx:'4', title:'第4批 · 兴趣 / 未定', time:'12月–入住后',
+   note:'非必需不急，入住后按实际体验再定。'}
+];
+const ITEMS = [
+  {id:'p01', b:'b0', n:'次卧床垫', nt:'次卧 · 甲醛源，越早越好', p:null, tg:'t-must', tt:'本周必须'},
+  {id:'p02', b:'b0', n:'儿童床垫', nt:'儿童房 · 甲醛源，越早越好', p:null, tg:'t-must', tt:'本周必须'},
+  {id:'p03', b:'b0', n:'儿童房实木成品家具', nt:'款式已定，只差下单', p:15000, tg:'t-must', tt:'本周'},
+  {id:'p04', b:'b0', n:'次卧床', nt:'已定款，选色后下单', p:3000, tg:'t-must', tt:'本周'},
+  {id:'p05', b:'b0', n:'空气循环扇 ×2–3', nt:'通风用，10/1 前到位（预算外）', p:750, tg:'t-must', tt:'本周'},
+  {id:'p06', b:'b1', n:'餐桌（岩板）', nt:'量：岛台 ↔ 餐边柜净空', p:5000, tg:'t-measure', tt:'先量尺'},
+  {id:'p07', b:'b1', n:'餐椅 ×6', nt:'与餐桌同批定', p:3000, tg:'t-measure', tt:'先量尺'},
+  {id:'p08', b:'b1', n:'茶几', nt:'量：沙发 ↔ 电视墙间距', p:null, tg:'t-measure', tt:'先量尺'},
+  {id:'p09', b:'b1', n:'床头柜 ×2（主卧 + 次卧）', nt:'按床边余量定尺寸', p:null, tg:'t-measure', tt:'先量尺'},
+  {id:'p10', b:'b1', n:'浴室柜台盆 + 镜柜', nt:'主卫 · 选型后对水电点位', p:null, tg:'t-measure', tt:'9月下旬'},
+  {id:'p11', b:'b1', n:'不锈钢柜', nt:'量尺后下单，10月装（无甲醛不卡通风）', p:10000, tg:'t-measure', tt:'9月下旬'},
+  {id:'p12', b:'b1', n:'不锈钢门套', nt:'开放厨房 · 许工，复尺 → 生产 → 10月装', p:1300, tg:'t-measure', tt:'复尺'},
+  {id:'p13', b:'b1', n:'不锈钢洞洞板', nt:'电梯厅 · 待定做', p:null, tg:'t-measure', tt:'10月'},
+  {id:'p14', b:'b2', n:'电视 海信 85Q8S', nt:'客厅 · 壁挂等墙布完工后再做', p:15000, tg:'t-1111', tt:'双11'},
+  {id:'p15', b:'b2', n:'扫地机器人（大疆）', nt:'等家具定型再选型号', p:5000, tg:'t-1111', tt:'双11'},
+  {id:'p16', b:'b2', n:'戴森吸尘器', nt:'清洁类', p:3000, tg:'t-1111', tt:'双11'},
+  {id:'p17', b:'b2', n:'微波炉', nt:'小家电', p:1000, tg:'t-1111', tt:'双11'},
+  {id:'p18', b:'b2', n:'电饭煲', nt:'小家电', p:1000, tg:'t-1111', tt:'双11'},
+  {id:'p19', b:'b2', n:'油烟机 + 灶具', nt:'方太灶 + 霍尼韦尔烟机；若已下单可勾掉', p:12000, tg:'t-1111', tt:'确认/双11'},
+  {id:'p20', b:'b2', n:'成品斗柜', nt:'主卧', p:10000, tg:'t-1111', tt:'双11'},
+  {id:'p21', b:'b2', n:'单人沙发', nt:'客厅', p:5000, tg:'t-1111', tt:'双11'},
+  {id:'p22', b:'b2', n:'升降桌 + 工学椅', nt:'书房（合计约 1 万）', p:10000, tg:'t-1111', tt:'双11'},
+  {id:'p23', b:'b2', n:'灯具（餐厅 / 落地）', nt:'主灯已在智能包内', p:10000, tg:'t-1111', tt:'双11'},
+  {id:'p24', b:'b3', n:'床品 / 毛巾 / 浴巾', nt:'主卧 + 次卧 + 儿童房', p:null, tg:'t-end', tt:'11月中'},
+  {id:'p25', b:'b3', n:'收纳用品（盒 / 篮 / 挂钩）', nt:'柜子多，需配套（预算外）', p:1500, tg:'t-end', tt:'11月'},
+  {id:'p26', b:'b3', n:'门垫 / 地垫', nt:'玄关 + 厨卫（预算外）', p:500, tg:'t-end', tt:'11月'},
+  {id:'p27', b:'b3', n:'厨房锅具 / 餐具', nt:'新家配新（预算外）', p:3500, tg:'t-end', tt:'11月'},
+  {id:'p28', b:'b3', n:'毛巾架', nt:'卫浴', p:null, tg:'t-end', tt:'11月'},
+  {id:'p29', b:'b3', n:'地毯', nt:'按沙发 + 茶几落位定尺寸', p:null, tg:'t-end', tt:'11–12月'},
+  {id:'p30', b:'b3', n:'挂画 / 摆件 / 饰品', nt:'等家具落位、风格定', p:null, tg:'t-end', tt:'11–12月'},
+  {id:'p31', b:'b3', n:'阳台茶桌椅', nt:'休闲区', p:null, tg:'t-end', tt:'11–12月'},
+  {id:'p32', b:'b3', n:'晾衣架（阳台）', nt:'视洗烘配置（预算外）', p:1000, tg:'t-end', tt:'11月'},
+  {id:'p33', b:'b3', n:'空气净化器', nt:'有小孩，冬季关窗兜底（预算外）', p:3000, tg:'t-end', tt:'12月'},
+  {id:'p34', b:'b3', n:'加湿器', nt:'冬季空调房（预算外）', p:750, tg:'t-end', tt:'12月'},
+  {id:'p35', b:'b3', n:'除湿机', nt:'杭州梅雨 / 回南天（预算外）', p:1500, tg:'t-end', tt:'明年春前'},
+  {id:'p36', b:'b3', n:'甲醛检测仪（自测）', nt:'辅助 CMA，前后都能看（预算外）', p:550, tg:'t-end', tt:'CMA前'},
+  {id:'p37', b:'b4', n:'B&O 音响', nt:'兴趣，非必需', p:10000, tg:'t-gray', tt:'未定'},
+  {id:'p38', b:'b4', n:'咖啡机', nt:'兴趣，非必需', p:2000, tg:'t-gray', tt:'未定'},
+  {id:'p39', b:'b4', n:'投影仪', nt:'兴趣，非必需', p:6000, tg:'t-gray', tt:'未定'},
+  {id:'p40', b:'b4', n:'电脑（配置B）', nt:'兴趣，非必需', p:30000, tg:'t-gray', tt:'未定'},
+  {id:'p41', b:'b4', n:'单人沙发床', nt:'慢挑', p:null, tg:'t-gray', tt:'未定'}
+];
+
+/* ============ 2. 配置 / 状态 ============ */
+const CFG_KEY='cq_cfg_v1', ST_KEY='cq_state_v1';
+const DEF_CFG={owner:'Ricardopan',repo:'report2604',branch:'main',path:'caigou/state.json',token:''};
+const DEF_ST={v:1,updatedAt:null,checked:{},deleted:[],added:[],edited:{}};
+let cfg=Object.assign({},DEF_CFG), st=JSON.parse(JSON.stringify(DEF_ST));
+let remoteSha=null, editingId=null, addingBatch=null, showDeleted=false;
+let saveTimer=null, dirty=false;
+const LS=('localStorage' in window);
+try{ if(LS){ const c=localStorage.getItem(CFG_KEY); if(c) cfg=Object.assign({},DEF_CFG,JSON.parse(c));
+  const s=localStorage.getItem(ST_KEY); if(s) st=Object.assign({},DEF_ST,JSON.parse(s)); } }catch(e){}
+
+function persistLocal(){ if(!LS) return; try{ localStorage.setItem(CFG_KEY,JSON.stringify(cfg));
+  localStorage.setItem(ST_KEY,JSON.stringify(st)); }catch(e){} }
+function toast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('on');
+  clearTimeout(el._h); el._h=setTimeout(()=>el.classList.remove('on'),1900); }
+function apiUrl(p){ return 'https://api.github.com/repos/'+cfg.owner+'/'+cfg.repo+'/contents/'+(p||cfg.path); }
+function headers(){ return cfg.token?{Authorization:'Bearer '+cfg.token,Accept:'application/vnd.github+json'}
+  :{Accept:'application/vnd.github+json'}; }
+function toB64(str){ const b=new TextEncoder().encode(str); let s=''; for(let i=0;i<b.length;i++) s+=String.fromCharCode(b[i]); return btoa(s); }
+function fromB64(b64){ const bin=atob((b64||'').replace(/\s/g,'')); const a=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return new TextDecoder().decode(a); }
+
+/* ============ 3. 合并（本地 ↔ 云端） ============ */
+function mergeState(local,remote){
+  if(!remote||!remote.v) return local;
+  if(!local||!local.updatedAt) return remote;
+  const newer = (String(remote.updatedAt) > String(local.updatedAt)) ? remote : local;
+  const older = newer===remote ? local : remote;
+  const out=JSON.parse(JSON.stringify(newer));
+  out.checked=Object.assign({},older.checked||{},newer.checked||{});
+  const dl=new Set([...(older.deleted||[]),...(newer.deleted||[])]);
+  out.deleted=Array.from(dl);
+  out.edited=Object.assign({},older.edited||{},newer.edited||{});
+  const map={}; (older.added||[]).forEach(a=>map[a.id]=a); (newer.added||[]).forEach(a=>map[a.id]=a);
+  Object.keys(map).forEach(k=>{ if(dl.has(k)) delete map[k]; });
+  out.added=Object.values(map);
+  return out;
+}
+
+/* ============ 4. 云端读写 ============ */
+function setSync(mode,msg){
+  const p=document.getElementById('syncPill'); p.className='pill';
+  const t=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  if(mode==='off'){ p.textContent='☁️ 未连接（点"云同步设置"）'; p.classList.add('warn'); }
+  else if(mode==='saving'){ p.textContent='☁️ 保存中…'; }
+  else if(mode==='saved'){ p.textContent='☁️ 已同步 '+t; p.classList.add('ok'); }
+  else if(mode==='local'){ p.textContent='💾 仅本机（未连云端）'; p.classList.add('warn'); }
+  else if(mode==='err'){ p.textContent='⚠️ '+(msg||'同步失败，已存本机'); p.classList.add('err'); }
+  else { p.textContent='☁️ 就绪'; }
+}
+async function pull(){
+  if(!cfg.token){ setSync('local'); return; }
+  setSync('saving');
+  try{
+    const r=await fetch(apiUrl(),{headers:headers(),cache:'no-store'});
+    if(r.status===404){ remoteSha=null; st.updatedAt=st.updatedAt||new Date().toISOString(); persistLocal(); setSync('saved'); return; }
+    if(r.status===401||r.status===403){ setSync('err','Token 无效或无权限'); return; }
+    if(!r.ok) throw 0;
+    const j=await r.json(); remoteSha=j.sha;
+    const remote=JSON.parse(fromB64(j.content));
+    const merged=mergeState(st,remote);
+    merged.updatedAt=new Date().toISOString();
+    const changed=JSON.stringify(merged)!==JSON.stringify(st);
+    st=merged; persistLocal(); renderAll(); setSync('saved');
+    if(changed) schedulePush(300);
+    else if(JSON.stringify(remote)!==JSON.stringify(st)) schedulePush(300);
+  }catch(e){ setSync('err','读不到云端，已用本机数据'); }
+}
+async function pushNow(){
+  if(!cfg.token) return;
+  setSync('saving');
+  try{
+    const body={message:'采购清单状态 '+new Date().toLocaleString('zh-CN'),content:toB64(JSON.stringify(st,null,1)),branch:cfg.branch};
+    if(remoteSha) body.sha=remoteSha;
+    let r=await fetch(apiUrl(),{method:'PUT',headers:headers(),body:JSON.stringify(body)});
+    if(r.status===409||r.status===422){ // sha 过期：重取后重试一次
+      const g=await fetch(apiUrl(),{headers:headers(),cache:'no-store'});
+      if(g.ok){ remoteSha=(await g.json()).sha; body.sha=remoteSha;
+        r=await fetch(apiUrl(),{method:'PUT',headers:headers(),body:JSON.stringify(body)}); }
+    }
+    if(r.status===401||r.status===403){ setSync('err','Token 无写权限'); return; }
+    if(!r.ok) throw 0;
+    const j=await r.json(); if(j&&j.content&&j.content.sha) remoteSha=j.content.sha;
+    dirty=false; setSync('saved');
+  }catch(e){ setSync('err','保存失败，已存本机'); }
+}
+function schedulePush(ms){
+  dirty=true; persistLocal();
+  if(!cfg.token){ setSync('local'); return; }
+  clearTimeout(saveTimer);
+  setSync('saving');
+  saveTimer=setTimeout(pushNow, ms||1200);
+}
+
+/* ============ 5. 渲染 ============ */
+function effList(){
+  const out=[];
+  ITEMS.forEach(it=>{ const e=st.edited[it.id]||{};
+    out.push({id:it.id,b:(e.b||it.b),n:(e.n!==undefined?e.n:it.n),nt:(e.nt!==undefined?e.nt:it.nt),
+      p:(e.p!==undefined?e.p:it.p),tg:(e.tg||it.tg),tt:(e.tt||it.tt),_edited:!!st.edited[it.id]}); });
+  (st.added||[]).forEach(a=>out.push(Object.assign({},a,{_added:true})));
+  return out;
+}
+function money(v){ return (v===null||v===undefined||v==='')?'待估':'¥'+Number(v).toLocaleString('zh-CN'); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderAll(){
+  const app=document.getElementById('app');
+  const list=effList();
+  app.innerHTML='';
+  BATCHES.forEach(b=>{
+    const mine=list.filter(i=>i.b===b.id);
+    const live=mine.filter(i=>!st.deleted.includes(i.id));
+    const dead=mine.filter(i=>st.deleted.includes(i.id));
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML='<div class="bh"><span class="idx">'+b.idx+'</span>'+esc(b.title)
+      +'<span class="cnt" data-cnt="'+b.id+'"></span></div>'
+      +'<div class="bmeta">📅 <span class="t">'+esc(b.time)+'</span> ｜ '+b.note+'</div><div data-list></div>'
+      +'<button class="addbtn" data-add="'+b.id+'">＋ 添加项目</button>';
+    app.appendChild(card);
+    const dl=card.querySelector('[data-list]');
+    live.forEach(it=>{ dl.appendChild(editingId===it.id?editForm(it):itemRow(it)); });
+    if(addingBatch===b.id) dl.appendChild(addForm(b.id));
+    if(showDeleted){
+      dead.forEach(it=>{ const r=itemRow(it,true); dl.appendChild(r); });
+    }
+  });
+  renderMeta();
+}
+function itemRow(it,dead){
+  const el=document.createElement('div');
+  el.className='item'+(st.checked[it.id]&&!dead?' done':'')+(dead?' delrow':'');
+  el.dataset.id=it.id;
+  const marks=(it._added?'<span class="mk">新增</span>':'')+(it._edited?'<span class="mk gray">已改</span>':'');
+  el.innerHTML='<span class="box"></span>'
+    +'<span class="main"><span class="nm">'+esc(it.n)+marks+'</span><span class="nt">'+esc(it.nt)+'</span></span>'
+    +'<span class="rt"><span class="pr'+(it.p?'':' est')+'">'+money(it.p)+'</span><br>'
+    +'<span class="tg '+esc(it.tg)+'">'+esc(it.tt)+'</span></span>'
+    +'<span class="acts">'
+      +(dead?'<button class="ic" title="恢复">↺</button><button class="ic del" title="彻底删除">✕</button>'
+            :'<button class="ic" title="编辑">✎</button><button class="ic del" title="删除">✕</button>')
+    +'</span>';
+  const cbox=el.querySelector('.box'), acts=el.querySelectorAll('.ic');
+  el.addEventListener('click',ev=>{
+    if(ev.target.closest('.acts')) return;
+    if(dead) return;
+    toggle(it.id);
+  });
+  if(dead){
+    acts[0].onclick=()=>{ st.deleted=st.deleted.filter(x=>x!==it.id);
+      if(it._added){} persist(); toast('已恢复'); renderAll(); };
+    acts[1].onclick=()=>{ if(!confirm('彻底删除"'+(it.n)+'"？不可恢复。')) return;
+      st.deleted=st.deleted.filter(x=>x!==it.id);
+      st.added=(st.added||[]).filter(a=>a.id!==it.id);
+      delete st.checked[it.id]; delete st.edited[it.id];
+      persist(); toast('已彻底删除'); renderAll(); };
+  }else{
+    acts[0].onclick=()=>{ editingId=it.id; renderAll(); };
+    acts[1].onclick=()=>{ if(!confirm('删除"'+(it.n)+'"？（可从"显示已删除"恢复）')) return;
+      if(!st.deleted.includes(it.id)) st.deleted.push(it.id);
+      persist(); toast('已删除'); renderAll(); };
+  }
+  return el;
+}
+function editForm(it){
+  const el=document.createElement('div'); el.className='form';
+  el.innerHTML='<div class="fr"><input class="wide" id="eN" value="'+esc(it.n)+'" placeholder="名称"></div>'
+    +'<div class="fr"><input class="wide" id="eT" value="'+esc(it.nt)+'" placeholder="备注（空间/说明）"></div>'
+    +'<div class="fr"><input id="eP" value="'+(it.p==null?'':it.p)+'" placeholder="金额（留空=待估）" inputmode="numeric">'
+    +'<select id="eB">'+BATCHES.map(b=>'<option value="'+b.id+'"'+(b.id===it.b?' selected':'')+'>'+esc(b.title)+'</option>').join('')+'</select></div>'
+    +'<div class="fb"><button class="pri" id="eS">保存</button><button id="eC">取消</button>'
+    +(it._edited?'<button id="eR">还原默认</button>':'')+'</div>';
+  el.querySelector('#eS').onclick=()=>{
+    const n=el.querySelector('#eN').value.trim()||'（未命名）';
+    const nt=el.querySelector('#eT').value.trim();
+    const pv=el.querySelector('#eP').value.trim();
+    const p=pv===''?null:Number(pv);
+    const b=el.querySelector('#eB').value;
+    if(it._added){ const a=(st.added||[]).find(x=>x.id===it.id); if(a){ a.n=n; a.nt=nt; a.p=p; a.b=b; } }
+    else { st.edited[it.id]=Object.assign({},st.edited[it.id],{n:n,nt:nt,p:p,b:b}); }
+    editingId=null; persist(); toast('已保存'); renderAll();
+  };
+  el.querySelector('#eC').onclick=()=>{ editingId=null; renderAll(); };
+  const r=el.querySelector('#eR'); if(r) r.onclick=()=>{ delete st.edited[it.id]; editingId=null; persist(); renderAll(); };
+  return el;
+}
+function addForm(bid){
+  const el=document.createElement('div'); el.className='form';
+  el.innerHTML='<div class="fr"><input class="wide" id="aN" placeholder="名称（必填）"></div>'
+    +'<div class="fr"><input class="wide" id="aT" placeholder="备注（可选）"></div>'
+    +'<div class="fr"><input id="aP" placeholder="金额（留空=待估）" inputmode="numeric">'
+    +'<select id="aTg"><option value="t-measure">先量尺</option><option value="t-must">必须</option>'
+    +'<option value="t-1111">双11</option><option value="t-end">收尾</option><option value="t-gray">未定</option></select></div>'
+    +'<div class="fb"><button class="pri" id="aS">添加</button><button id="aC">取消</button></div>';
+  el.querySelector('#aS').onclick=()=>{
+    const n=el.querySelector('#aN').value.trim(); if(!n){ toast('请填名称'); return; }
+    const pv=el.querySelector('#aP').value.trim();
+    st.added.push({id:'x'+Date.now().toString(36),b:bid,n:n,nt:el.querySelector('#aT').value.trim(),
+      p:pv===''?null:Number(pv),tg:el.querySelector('#aTg').value,tt:'自定义'});
+    addingBatch=null; persist(); toast('已添加'); renderAll();
+  };
+  el.querySelector('#aC').onclick=()=>{ addingBatch=null; renderAll(); };
+  return el;
+}
+function renderMeta(){
+  const list=effList().filter(i=>!st.deleted.includes(i.id));
+  let done=0,amt=0,known=0;
+  list.forEach(it=>{ if(it.p) known+=Number(it.p); if(st.checked[it.id]){ done++; if(it.p) amt+=Number(it.p); } });
+  const total=list.length, pct=total?Math.round(done/total*100):0;
+  document.getElementById('pct').textContent=pct+'%';
+  document.getElementById('bar').style.width=pct+'%';
+  document.getElementById('pline').textContent='已买 '+done+' / '+total+' 项 ｜ 已花 '+money(amt)+' ｜ 已知合计 '+money(known);
+  BATCHES.forEach(b=>{
+    const mine=list.filter(i=>i.b===b.id), d=mine.filter(i=>st.checked[i.id]).length;
+    const el=document.querySelector('[data-cnt="'+b.id+'"]');
+    if(el){ el.textContent=d+' / '+mine.length; el.classList.toggle('full',d===mine.length&&mine.length>0); }
+  });
+}
+function persist(){ st.updatedAt=new Date().toISOString(); persistLocal(); schedulePush(); }
+function toggle(id){ st.checked[id]=!st.checked[id]; if(!st.checked[id]) delete st.checked[id]; persist(); renderAll(); }
+
+/* ============ 6. 交互绑定 ============ */
+document.addEventListener('click',ev=>{
+  const a=ev.target.closest('[data-add]'); if(a){ addingBatch=a.dataset.add; editingId=null; renderAll();
+    const f=document.querySelector('.form input'); if(f) f.focus(); }
+});
+document.getElementById('btnPrint').onclick=()=>window.print();
+document.getElementById('btnSync').onclick=()=>{ if(!cfg.token){ openCfg(); toast('先连接云端'); return; } pull().then(()=>toast('已同步')); };
+document.getElementById('btnReset').onclick=()=>{
+  if(!confirm('清空所有打勾？（不影响删除/新增）')) return;
+  st.checked={}; persist(); renderAll(); toast('已清空打勾');
+};
+document.getElementById('btnCopy').onclick=async()=>{
+  let t='采购清单进度（'+new Date().toLocaleDateString('zh-CN')+'）\n';
+  const list=effList();
+  BATCHES.forEach(b=>{
+    const mine=list.filter(i=>i.b===b.id&&!st.deleted.includes(i.id)); if(!mine.length) return;
+    t+='\n【'+b.title+'】\n';
+    mine.forEach(i=>{ t+=(st.checked[i.id]?'[x] ':'[ ] ')+i.n+(i.p?('  ¥'+Number(i.p).toLocaleString()):'')+'\n'; });
+  });
+  try{ await navigator.clipboard.writeText(t); toast('已复制到剪贴板'); }
+  catch(e){ toast('复制失败，请手动截图'); }
+};
+document.getElementById('delToggle').onclick=()=>{
+  showDeleted=!showDeleted;
+  document.getElementById('delToggle').textContent=showDeleted?'隐藏已删除':'显示已删除';
+  renderAll();
+};
+/* 云同步设置 */
+const mask=document.getElementById('cfgMask');
+function openCfg(){
+  document.getElementById('fOwner').value=cfg.owner; document.getElementById('fRepo').value=cfg.repo;
+  document.getElementById('fBranch').value=cfg.branch; document.getElementById('fPath').value=cfg.path;
+  document.getElementById('fToken').value=cfg.token||'';
+  document.getElementById('cfgRepoShow').textContent=cfg.owner+'/'+cfg.repo;
+  document.getElementById('cfgPathShow').textContent=cfg.path;
+  mask.classList.add('on');
+}
+document.getElementById('cfgBtn').onclick=openCfg;
+document.getElementById('cfgClose').onclick=()=>mask.classList.remove('on');
+document.getElementById('cfgClear').onclick=()=>{ cfg.token=''; persistLocal(); setSync('off'); mask.classList.remove('on'); toast('已断开云端（仍存本机）'); };
+document.getElementById('cfgSave').onclick=async()=>{
+  cfg.owner=document.getElementById('fOwner').value.trim()||DEF_CFG.owner;
+  cfg.repo=document.getElementById('fRepo').value.trim()||DEF_CFG.repo;
+  cfg.branch=document.getElementById('fBranch').value.trim()||'main';
+  cfg.path=document.getElementById('fPath').value.trim()||DEF_CFG.path;
+  cfg.token=document.getElementById('fToken').value.trim();
+  persistLocal(); mask.classList.remove('on');
+  if(!cfg.token){ setSync('off'); return; }
+  await pull(); toast('已连接');
+};
+/* 启动 */
+document.getElementById('delToggle').textContent='显示已删除';
+renderAll();
+if(cfg.token) pull(); else setSync(LS?'off':'local');
+if(!LS) document.getElementById('storeHint').textContent='⚠️ 本浏览器不支持本地保存，且未连云端——改动会丢，请用 Chrome/Safari 打开。';
+window.addEventListener('beforeunload',e=>{ if(dirty&&cfg.token){ e.preventDefault(); e.returnValue=''; } });
+</script>
+</body>
+</html>
