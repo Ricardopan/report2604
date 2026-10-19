@@ -1,10 +1,12 @@
 {
  "v": 1,
- "updatedAt": "2026-10-19T12:15:29.445Z",
+ "updatedAt": "2026-10-19T12:15:35.645Z",
  "checked": {
   "p47": true
  },
- "deleted": [],
+ "deleted": [
+  "p43"
+ ],
  "added": [],
  "edited": {
   "p61": {
